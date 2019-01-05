@@ -12,8 +12,7 @@ class Point:
     def __lt__(self, other):
         self.x < other.x or (self.x == other.x and self.y < other.y)
 
-    def is_external(self, segment):
-        A, B = segment.p1, segment.p2
+    def is_external(self, A, B):
         return (B.x-A.x) * (self.y-A.y) - (B.y-A.y) * (self.x-A.x) > 0
 
     def __str__(self):
