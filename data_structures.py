@@ -25,7 +25,7 @@ class Point:
 #counterclockwise order
 def ccw(A,B,C):
     return (C.y-A.y) * (B.x-A.x) > (B.y-A.y) * (C.x-A.x)
-        
+
 class Segment:
     def __init__(self, p1, p2):
         self.p1 = p1
@@ -45,7 +45,7 @@ class Segment:
         if self.p1 == other.p1 or self.p1 == other.p2 or self.p2 == other.p1 or self.p2 == other.p2:
             return False
         A, B, C, D = self.p1, self.p2, other.p1, other.p2
-        return ccw(A,C,D) != ccw(B,C,D) and ccw(A,B,C) != ccw(A,B,D) 
+        return ccw(A,C,D) != ccw(B,C,D) and ccw(A,B,C) != ccw(A,B,D)
 
 
 class Polygon:
@@ -54,15 +54,15 @@ class Polygon:
         self.points.sort()
         self.segments = []
         self.neighbours_list = {}
-        
+
         i = 0
         while segments[i].p1 != self.points[0]:
             i += 1
-        
+
         for j in range(len(segments)):
             s = segments[(j + i) % len(segments)]
             self.segments.append(s)
-    
+
     def external_segment(self, p, p1):
         if self.are_neighbours(p, p1):
             return True
@@ -75,7 +75,7 @@ class Polygon:
             if s.has_strict_intersection(s1):
                 nb_intersections += 1
         return nb_intersections % 2 == 0
-        
+
     def contains(self, point):
         y = point.y
         x_min = min([s.x for s in self.points]) - 1
@@ -85,20 +85,26 @@ class Polygon:
             if s.has_intersection(s1):
                 nb_intersections += 1
         return nb_intersections % 2 == 1
-    
-    
+
+
     def neighbours(self, point):
         i = 0
         while self.segments[i].p1 != point:
             i += 1
         return [self.segments[i - 1].p1, self.segments[i].p2]
-    
+
     def are_neighbours(self, p1, p2):
         return p2 in self.neighbours(p1)
-        
+
     def edges_with(self, point):
         return [Segment(point, p) for p in self.neighbours(point)]
-        
+
+    def from_points(points):
+        segments = []
+        for i in range(len(points) - 1):
+            segments.append(Segment(points[i], points[i + 1]))
+        return Polygon(segments)
+
 class VisibilityGraph:
     def __init__(self, obstacles=[], points=[]):
         self.edges = []
@@ -113,7 +119,7 @@ class VisibilityGraph:
         for p in points:
             self.points.append((-1, p))
         self.compute()
-        
+
     def compute(self):
         self.points.sort(key=lambda x : x[1])
         vus = []
@@ -128,7 +134,7 @@ class VisibilityGraph:
                         correct = False
                 if correct:
                     points.append(p)
-                
+
         segments = []
         for (i, p) in points:
             correct = True
@@ -146,10 +152,10 @@ class VisibilityGraph:
                         if not any(s.has_strict_intersection(s1) for s1 in segments):
                             self.edges.append(s)
             vus.append((i, p))
-    
+
     def get_points(self):
         return [p[1] for p in self.points]
-        
+
     def add_point(self, point):
         for (i, o) in self.obstacles:
             if o.contains(point):
@@ -175,6 +181,6 @@ class VisibilityGraph:
                     if not any(s.has_strict_intersection(s1) for s1 in segments):
                         self.edges.append(s)
             vus.append((i, p))
-        
+
     def add_obstacle(self, obstacles):
         pass

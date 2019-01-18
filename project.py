@@ -28,7 +28,7 @@ def visibility_graph(obstacle, p1, p2):
             graph[i][N - 2] = 1
         if not any(s2.has_intersection(s) for s in obstacle):
             graph[N - 1][i] = 1
-            graph[i][N - 1] = 1  
+            graph[i][N - 1] = 1
     return graph
 
 def visibility_graph_c(polygon, segments): # possible only if no intersection into polygons
@@ -71,7 +71,7 @@ def visibility_graph_b(obstacles):
                     edges.append(s)
         vus.append((i, p))
     return edges
-    
+
 def complete_graph(obstacles, point, edges):
     points = []
     for (i, o) in enumerate(obstacles):
@@ -100,13 +100,7 @@ def complete_graph(obstacles, point, edges):
                     edges.append(s)
         vus.append((i, p))
     return edges
-    
-def build_polygon(points):
-    segments = []
-    for i in range(len(points) - 1):
-        segments.append(Segment(points[i], points[i + 1]))
-    return Polygon(segments)
-    
+
 def convex_minkowski_sum(A, B):
     p = min(A.points)
     points = [Point(p1.x + p2.x - p.x, p1.y + p2.y - p.y) for (p1, p2) in itertools.product(A.points, B.points)]
@@ -117,7 +111,7 @@ points_1 = [Point(randint(0, 40), randint(0, 50)) for i in range(10)]
 convex_hull_1 = compute_convex_hull_incremental(points_1)
 polygon_1 = Polygon(convex_hull_1)
 
-polygon_2 = build_polygon([Point(120, 120), Point(160, 120), Point(160, 80),
+polygon_2 = Polygon.from_points([Point(120, 120), Point(160, 120), Point(160, 80),
                           Point(120, 80), Point(120, 100), Point(140, 100),
                           Point(140, 90), Point(150, 90), Point(150, 110),
                           Point(120, 110), Point(120, 120)])
@@ -140,8 +134,3 @@ print_segments(v.edges, color='red', lw=1)
 
 plt.show()
 plt.close()
-                
-                
-                
-                
-                
