@@ -2,6 +2,7 @@ from functools import total_ordering
 from operator import itemgetter
 import itertools
 from copy import deepcopy
+import numpy as np
 
 @total_ordering
 class Point:
@@ -94,15 +95,22 @@ class Polygon:
 
     def convex_minkowski_sum(self, P2):
         points_1, points_2 = self._points, P2.points()
-        p = min(points_2)
-        points = [Point(p1.x + p2.x - p.x, p1.y + p2.y - p.y) for (p1, p2) in itertools.product(points_2, points_1)]
+        points = [Point(p1.x + p2.x, p1.y + p2.y) \
+                  for (p1, p2) in itertools.product(points_2, points_1)]
         return Polygon.compute_convex_hull_incremental(points)
     
     def minkowski_sum(self, P2):
-        points_1, points_2 = self._points, P2.points()
-        p = min(points_2)
-        points = [Point(p1.x + p2.x - p.x, p1.y + p2.y - p.y) for (p1, p2) in itertools.product(points_2, points_1)]
-        return Polygon.compute_convex_hull_incremental(points)    
+        points_2 = P2.points()
+        x, y = points_2[0].x, points_2[0].y
+        pol_2 = Polygon([Point(x - p1.x, y - p1.y) for p1 in points_2])
+        triangles_2 = pol_2.simple_triangulation()
+        triangles_1 = self.simple_triangulation()
+        result = []
+        for t1 in triangles_1:
+            for t2 in triangles_2:
+                result.append(t1.convex_minkowski_sum(t2))
+        # return Polygon.union(result)
+        return result
     
     def points(self):
         return self._points
