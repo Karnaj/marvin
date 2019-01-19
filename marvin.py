@@ -15,7 +15,6 @@ def print_segments(segments, color='blue', lw=1):
     for s in segments:
         plt.plot([s.p1.x, s.p2.x], [s.p1.y, s.p2.y], color=color, lw=lw)
 
-
 def visibility_graph(obstacle, p1, p2):
     N = len(obstacle) + 2
     graph = [[0 for i in range(N)] for j in range(N)]
@@ -32,6 +31,23 @@ def visibility_graph(obstacle, p1, p2):
             graph[N - 1][i] = 1
             graph[i][N - 1] = 1  
     return graph
+
+def read_from_file(file):
+    """
+    Read from file. Formated as follow
+    Polygon_1
+    Polygon_2
+    ...
+    Polygon_n
+    
+    Robot polygon
+    
+    point_1
+    point_2
+    ...
+    point_n
+    """
+
 
 points_1 = [Point(randint(0, 40), randint(0, 50)) for i in range(10)]
 polygon_1 = Polygon.compute_convex_hull_incremental(points_1)
@@ -77,10 +93,27 @@ v = VisibilityGraph(polygon_list, [Point(0, 7), Point(148, 100)])
 print_segments(polygon_1.segments(), color='black', lw=3)
 print_segments(polygon_2.segments(), color='black', lw=2)
 print_segments(polygon_3.segments(), color='black', lw=3)
-
-
 print_segments(v.edges, color='red', lw=1)
 
 plt.show()
 plt.close()
-   
+
+while True:
+    str = input().split()
+    if str == []:
+        break
+    elif len(str) == 2:
+        x, y = int(str[0]), int(str[1])
+        v.add_point(Point(x, y))
+    print(24)
+    print_segments(polygon_1.segments(), color='black', lw=3)
+    print_segments(polygon_2.segments(), color='black', lw=2)
+    print_segments(polygon_3.segments(), color='black', lw=3)
+    print_segments(v.edges, color='red', lw=1)
+    plt.show()
+    plt.close()
+                
+                
+                
+                
+                
