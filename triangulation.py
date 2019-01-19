@@ -32,3 +32,51 @@ def simple_triangulation(poly):
 
     p = poly.copy()
     return aux(p, [])
+
+
+
+#####################
+##############################
+
+import binary_tree
+
+# Advanced Algorithm, inspired from Computational Geometry : Algorithms & applications by Berg & al.
+
+def start_vertex(i, D, T):
+    ei = D.get_from(i)
+    T.insert((ei, i)) #vi is the helper of e
+
+def end_vertex(i, D, T):
+
+    epi = D.get_from(i-1) #e(i-1)
+    helper = T.find(epi)
+
+    if is_merge(helper):
+        D.add()
+
+def y_monotonous_partition(poly):
+
+    D = poly.deque() #Double ended queue of the edges.
+    q = poly.points()
+
+    q.sort(key = lambda p : (p.y, -p.x))
+
+    # Currently sweeped edges from left to right, (who has the interior of P to their right) with their resp. helpers.
+    T = BST()
+
+    while not q.empty():
+        v = q.pop()
+
+        # En fonction du cas, appeler la f°
+
+
+    return 0
+
+#O(n*log(n))
+# We use the monotone decomposition of polygon, takes log(n) time
+# Then, triangulating a monotone polygon is linear.
+# Note : doesn't work on non simple polygons (ie poly where 2 edges intersects)
+def fast_triangulation(poly):
+
+
+    return 0
