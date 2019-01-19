@@ -1,6 +1,7 @@
 from functools import total_ordering
 from operator import itemgetter
 import itertools
+from copy import deepcopy
 
 @total_ordering
 class Point:
@@ -207,8 +208,42 @@ class Polygon:
                     return False
         return True
         
-    def non_trivial_triangle(self):
+    def is_non_trivial_triangle(self):
         if len(self._points) != 3:
             return False
         p1, p2, p3 = self._points
-        return (p2.x - p1.x) * (p3.y - p2.y) != (p2.y - p1.y) * (p3.x - p2.x)
+        return (p2.x - p1.x) * (p3.y - p2.y) != (p2.y - p1.y) * (p3.x - p2.x) 
+        
+    def simple_triangulation(self):
+        def aux(poly, L):
+            if len(poly.points()) < 4:
+                L.append(poly)
+            else:
+                po = poly.points()[0]
+                pg, pd = poly.vertex_neighbours(po)
+
+                triangle = Polygon([po, pg, pd])
+
+                #s = Segement(pg, pd)
+                if poly.is_internal_edge(pg, pd):
+                    L.append(triangle)
+                    #p = poly.copy(); is it necessary ?
+                    poly.remove_vertex(po) # Remove po so now we have the segment pg pd instead of po pg and po pd.
+                    aux(poly, L)
+                else:
+                    l = [e for e in poly.points() if triangle.strictly_contains_point(e)]
+                    s = Segment(pg, pd)
+                
+                    def dist(s, c):
+                        a, b = s.p1, s.p2
+                        return abs((b.x-a.x)*(c.y-a.y)-(b.y-a.y)*(c.x-a.x))
+
+                    pj = max(l, key=lambda e: dist(s,e))
+                    poly_l, poly_r = poly.split(po, pj)
+                    aux(poly_l, L)
+                    aux(poly_r, L)
+
+        p = deepcopy(self)
+        L = []
+        aux(p, L)
+        return [t for t in L if t.is_non_trivial_triangle()]
