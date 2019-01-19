@@ -15,103 +15,85 @@ def print_segments(segments, color='blue', lw=1):
     for s in segments:
         plt.plot([s.p1.x, s.p2.x], [s.p1.y, s.p2.y], color=color, lw=lw)
 
-def visibility_graph(obstacle, p1, p2):
-    N = len(obstacle) + 2
-    graph = [[0 for i in range(N)] for j in range(N)]
-    for i in range(N - 2):
-        graph[i][(i + 1) % len(obstacle)] = 1
-        graph[(i + 1)%len(obstacle)][i] = 1
-    for i in range(N - 2):
-        s1 = Segment(p1, obstacle[i].p1)
-        s2 = Segment(p2, obstacle[i].p1)
-        if not any(s1.has_intersection(s) for s in obstacle):
-            graph[N - 2][i] = 1
-            graph[i][N - 2] = 1
-        if not any(s2.has_intersection(s) for s in obstacle):
-            graph[N - 1][i] = 1
-            graph[i][N - 1] = 1  
-    return graph
-
 def read_from_file(file):
-    """
-    Read from file. Formated as follow
-    Polygon_1
-    Polygon_2
-    ...
-    Polygon_n
+    with open(file) as file:
+        polygons = []
+        robot = []
+        points = []
+        step = 0
+        for line in file:
+            if step > 2:
+                break
+            if line == "robot\n":
+                step += 1
+            elif line == "points\n":
+                step += 1
+            elif step == 0:
+                points = [s.split() for s in line.split(",")]
+                points = [Point(int(x), int(y)) for (x, y) in points]
+                polygons.append(Polygon(points))
+            elif step == 1:
+                points = [s.split() for s in line.split(",")]
+                points = [Point(int(x), int(y)) for (x, y) in points]
+                robot = Polygon(points)
+            elif step == 2:
+                p = line.split()
+                points.append(Point(int(p[0]), int(p[1])))
+        return polygons, robot, points
+        
+colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
+polygons, robot, points = read_from_file('example.txt')
+
+
+
+#polygons = [triangle for p in polygons for triangle in p.simple_triangulation()]
+result = []
+
+for p in polygons:
+    news = p.minkowski_sum(robot)
+    for p1 in news:
+        result.append(p1)
+
+
+points = deepcopy(robot.points())
+p = points[0]
+points = [Point(p1.x - p.x, p1.y - p.y) for p1 in points]
+points = [Point(-p.x, -p.y) for p in points]
+        
+for p in polygons:
+    print_segments(p.segments(), color='k', lw=2)    
     
-    Robot polygon
+for p in result:
+    print_segments(p.segments(), color='r', lw=1)
     
-    point_1
-    point_2
-    ...
-    point_n
-    """
 
+print_points(points)
+print_segments(robot.segments(), color='b', lw=2)
 
-points_1 = [Point(randint(0, 40), randint(0, 50)) for i in range(10)]
-polygon_1 = Polygon.compute_convex_hull_incremental(points_1)
-
-polygon_2 = Polygon([Point(120, 120), Point(160, 120), Point(160, 80),
-                          Point(120, 80), Point(120, 100), Point(140, 100),
-                          Point(140, 90), Point(150, 90), Point(150, 110),
-                          Point(120, 110)])
-
-
-points_3 = [Point(randint(0, 40), randint(90, 130)) for i in range(10)]
-polygon_3 = Polygon.compute_convex_hull_incremental(points_3)
-
-polygon_list = polygon_2.simple_triangulation()
-
-v = VisibilityGraph([polygon_1, polygon_2, polygon_3], [Point(70, 3), Point(15, 30)])
-
-points = [Point(72, 48), Point(30, 70), Point(140, 40), Point(60, 110)]
-
-#for p in points:
-#    v.add_point(p)
-
-#v.add_obstacle(polygon_3)
-
-print_points(polygon_1.points())
-print_points(polygon_2.points())
-print_points(polygon_3.points())
-print_points(v.get_points())
-
-
-polygon_1 = Polygon([Point(0, 0), Point(0, 7), Point(7, 7), Point(7, 0)])
-polygon_list = [p.convex_minkowski_sum(polygon_1) for p in polygon_list]
-
-for p in polygon_list:
-    print_segments(p.segments(), color=sample(['b', 'g', 'r', 'c', 'm', 'y', 'k'], 1)[0], lw=1)
-    for p1 in p.points():
-        print(p1)    
-    print()
-    print()
+# v = VisibilityGraph(polygon_list, [Point(0, 7), Point(148, 100)])
     
-v = VisibilityGraph(polygon_list, [Point(0, 7), Point(148, 100)])
-    
-print_segments(polygon_1.segments(), color='black', lw=3)
-print_segments(polygon_2.segments(), color='black', lw=2)
-print_segments(polygon_3.segments(), color='black', lw=3)
-print_segments(v.edges, color='red', lw=1)
+# print_segments(polygon_1.segments(), color='black', lw=3)
+#print_segments(polygon_2.segments(), color='black', lw=2)
+#print_segments(polygon_3.segments(), color='black', lw=3)
+# print_segments(v.edges, color='red', lw=1)
 
 plt.show()
 plt.close()
 
-while True:
-    str = input().split()
-    if str == []:
-        break
-    elif len(str) == 2:
-        x, y = int(str[0]), int(str[1])
-        v.add_point(Point(x, y))
-    print(24)
-    print_segments(polygon_1.segments(), color='black', lw=3)
-    print_segments(polygon_2.segments(), color='black', lw=2)
-    print_segments(polygon_3.segments(), color='black', lw=3)
-    print_segments(v.edges, color='red', lw=1)
-    plt.show()
-    plt.close()
+# while True:
+    # str = input().split()
+    # if str == []:
+        # break
+    # elif len(str) == 2:
+        # x, y = int(str[0]), int(str[1])
+        # v.add_point(Point(x, y))
+    # print(24)
+    # print_segments(polygon_1.segments(), color='black', lw=3)
+    # print_segments(polygon_2.segments(), color='black', lw=2)
+    # print_segments(polygon_3.segments(), color='black', lw=3)
+    # print_segments(v.edges, color='red', lw=1)
+    # plt.show()
+    # plt.close()
                 
                 
                 
