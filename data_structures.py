@@ -1,5 +1,6 @@
 from functools import total_ordering
 from operator import itemgetter
+import itertools
 
 @total_ordering
 class Point:
@@ -50,6 +51,34 @@ class Segment:
 
 
 class Polygon:
+    def is_hull_side(p, q, points):
+        if p == q:
+            return False
+        return all(not point.is_strictly_external(p, q) for point in points)
+    
+    def compute_convex_hull_incremental(points):
+        N = len(points)
+
+        def compute(hull, sup=True):
+            a, b, g = (2, N, 1) if sup else (N - 3, - 1, - 1)
+            for i in range(a, b, g):
+                hull.append(points[i])
+                while len(hull) > 2:
+                    p3 = hull[-1]
+                    p2 = hull[-2]
+                    p1 = hull[-3]
+                    if p3.is_external(p1, p2):
+                        hull.pop(-2)
+                    else:
+                        break
+
+        points.sort()
+        hull_points = [points[0],points[1]]
+        compute(hull_points)
+        hull_points.append(points[N-2])
+        compute(hull_points, sup=False)
+        return Polygon(hull_points)
+    
     def __init__(self, points):
         _points = []
         for (i, p) in enumerate(points):
@@ -61,7 +90,19 @@ class Polygon:
             self._points = [_points[(i_min + i) % N] for i in range(N)]
         else:
             self._points = [_points[(i_min - i) % N] for i in range(N)]
-            
+
+    def convex_minkowski_sum(self, P2):
+        points_1, points_2 = self._points, P2.points()
+        p = min(points_2)
+        points = [Point(p1.x + p2.x - p.x, p1.y + p2.y - p.y) for (p1, p2) in itertools.product(points_2, points_1)]
+        return Polygon.compute_convex_hull_incremental(points)
+    
+    def minkowski_sum(self, P2):
+        points_1, points_2 = self._points, P2.points()
+        p = min(points_2)
+        points = [Point(p1.x + p2.x - p.x, p1.y + p2.y - p.y) for (p1, p2) in itertools.product(points_2, points_1)]
+        return Polygon.compute_convex_hull_incremental(points)    
+    
     def points(self):
         return self._points
         
@@ -94,11 +135,15 @@ class Polygon:
   
     def remove_vertex(self, p):
         self._points.remove(p)
+        N = len(self._points)
+        i_min, _ = min(enumerate(self._points), key=itemgetter(1))
+        self._points = [self._points[(i_min + i) % N] for i in range(N)]
         
     def split(self, p1, p2):
         i = 0
+        N = len(self._points)
         polygon_points_1, polygon_points_2 = [], []
-        
+            
         while self._points[i] != p1 and self._points[i] != p2:
             polygon_points_1.append(self._points[i])
             i += 1
@@ -107,14 +152,14 @@ class Polygon:
         polygon_points_1.append(p1)        
         polygon_points_2.append(p1)
         
-        while self._points[i] != p2:
-            polygon_points_2.append(self._points[i])
+        while self._points[i % N] != p2:
+            polygon_points_2.append(self._points[i % N])
             i += 1
         polygon_points_2.append(p2)
         polygon_points_1.append(p2)
         
-        while self._points[i] != p1:
-            polygon_points_1.append(self._points[i])
+        while self._points[i % N] != p1:
+            polygon_points_1.append(self._points[i % N])
             i += 1
         
         return Polygon(polygon_points_1), Polygon(polygon_points_2)
@@ -129,14 +174,14 @@ class Polygon:
                 nb_intersections += 1
         return nb_intersections % 2 == 1
         
-    def strictly_contains_points(self, p):
+    def strictly_contains_point(self, p):
         return (not p in self._points) and self.contains_point(p)
     
-    def interior_contains_points(self, p):
-        return self.strictly_contains_points(p)
+    def interior_contains_point(self, p):
+        return self.strictly_contains_point(p)
         # Should also check that for all edges e, p is not in e.
         
-    def border_stricly_intersect_segment(self, p1, p2):
+    def border_strictly_intersect_segment(self, p1, p2):
         # Intersect the polygon border and strictly (not in a vertex).
         if self.has_edge_with(p1, p2):
             return False
@@ -145,9 +190,9 @@ class Polygon:
 
     def is_internal_edge(self, p, p1):
         pm = Point((p.x + p1.x) / 2, (p.y + p1.y)/2)
-        if not self.contains(pm):
+        if not self.contains_point(pm):
             return False
-        return not self.sricly_intersect_segment(p, p1)
+        return not self.border_strictly_intersect_segment(p, p1)
     
     def is_external_edge(self, p, p1):
         if self.has_edge_with(p, p1):
@@ -162,86 +207,8 @@ class Polygon:
                     return False
         return True
         
-class VisibilityGraph:
-    def __init__(self, obstacles, points=[]):
-        self.edges = []
-        self._points = []
-        self.i = 0
-        self.obstacles = []
-        for o in obstacles:
-            self.obstacles.append((self.i, o))
-            for p in o.points():
-                self._points.append((self.i, p))
-            self.i += 1
-        for p in points:
-            self._points.append((-1, p))
-        self.compute()
-        
-    def compute(self):
-        self._points.sort(key=lambda x : x[1])
-        vus = []
-        points = []
-        for p in self._points:
-            if p[0] != -1:
-                points.append(p)
-            else:
-                correct = True
-                for (j, o) in self.obstacles:
-                    if o.strictly_contains_points(p[1]):
-                        correct = False
-                if correct:
-                    points.append(p)
-                
-        segments = []
-        for (i, p) in points:
-            correct = True
-            if i != -1:
-                edges = self.obstacles[i][1].vertex_edges(p)
-                segments.append(edges[1])
-                segments.append(edges[0])
-            else:
-                for (j, p1) in vus:
-                    if self.obstacles[j][1].strictly_contains_points(p):
-                        correct = False
-            if correct:
-                print(p)
-                for (j, p1) in vus:
-                    s = Segment(p, p1)
-                    if i == j and not self.obstacles[i][1].is_external_edge(p, p1):
-                            print("   {} {}", p1, False)
-                    if i != j or i == -1 or self.obstacles[i][1].is_external_edge(p, p1):
-                        if not any(s.has_strict_intersection(s1) for s1 in segments):
-                            self.edges.append(s)
-            vus.append((i, p))
-    
-    def get_points(self):
-        return [p[1] for p in self._points]
-        
-    def add_point(self, point, obstacle_id=-1):
-        for (i, o) in self.obstacles:
-            if i != obstacle_id and o.contains(point):
-                return
-        self._points.append((obstacle_id, point))
-        self._points.sort(key=lambda x : x[1])
-        vus = []
-        segments = []
-        o_id = obstacle_id
-        is_reached = False
-        for (i, p) in self._points:
-            if i != -1:
-                segments.append(self.obstacles[i][1].edges_with(p)[1])
-                segments.append(self.obstacles[i][1].edges_with(p)[0])
-            if p == point:
-                is_reached = True
-                for (j, p1) in vus:
-                    s = Segment(point, p1)
-                    if i != j or i == -1 or self.obstacles[i][1].is_external_edge(p, p1):
-                        if not any(s.has_strict_intersection(s1) for s1 in segments):
-                            self.edges.append(s)
-            else:
-                if is_reached:
-                    s = Segment(point, p)
-                    if i != o_id or o_id == -1 or self.obstacles[i][1].is_external_edge(p, p1):
-                        if not any(s.has_strict_intersection(s1) for s1 in segments):
-                            self.edges.append(s)
-            vus.append((i, p))
+    def non_trivial_triangle(self):
+        if len(self._points) != 3:
+            return False
+        p1, p2, p3 = self._points
+        return (p2.x - p1.x) * (p3.y - p2.y) != (p2.y - p1.y) * (p3.x - p2.x)
