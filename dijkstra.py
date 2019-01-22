@@ -101,3 +101,21 @@ def find_path(prec, trg):
         L.append(trg)
     L.append(trg) # trg is the source
     return L
+
+def make_graph(vb_grp):
+    h = {}
+    n = len(vb_grp._points)
+    for e in range(n):
+        h[vb_grp._points] = e
+    mat = np.zeros(n, n)
+    graph = [[] for e in range(n)]
+
+    for e in vb_grp.edges:
+        a, b = e
+        d = a.dist_c(b)
+        mat[a][b] = d
+        mat[b][a] = d
+        graph[a].append(b)
+        graph[b].append(a)
+
+    return mat, graph
