@@ -1,5 +1,3 @@
-
-
 class Heap:
     def __init__(self, objs):
         self.n = 0
@@ -25,12 +23,12 @@ class Heap:
         if self:
             self.heap[1] = x
             self.rank[x] = 1
-            self.down(x)
+            self.down(1)
         return root
 
     def up(self, i):
         x = self.heap[i]
-        while i > 1 and x < self.heap[i // 2]
+        while i > 1 and x < self.heap[i // 2]:
             self.heap[i] = self.heap[i // 2]
             self.rank[self.heap[i // 2]] = i
             i //= 2
@@ -39,7 +37,7 @@ class Heap:
 
     def down(self, i):
         x = self.heap[i]
-        n = len(self.heap[i])
+        n = len(self.heap)
         while True:
             left = 2*i
             right = left + 1
@@ -59,15 +57,15 @@ class Heap:
                 self.rank[x] = i
                 return
 
-        def update(self, old, new):
-            i = self.rank[old]
-            del self.rank[old]
-            self.heap[i] = new
-            self.rank[new] = i
-            if old < new:
-                self.down(i)
-            else:
-                self.up(i)
+    def update(self, old, new):
+        i = self.rank[old]
+        del self.rank[old]
+        self.heap[i] = new
+        self.rank[new] = i
+        if old < new:
+            self.down(i)
+        else:
+            self.up(i)
 
 
 #####  Dijkstra using my heap as a priority queue.
@@ -78,12 +76,13 @@ def dijkstra_update_heap(graph, weight, src = 0, trg = None):
     dist = [float('inf')] * n
     dist[src] = 0
     heap = Heap([(dist[node], node) for node in range(n)])
-
+    
     while heap:
         d_node, node = heap.pop()
-        if node == target:
+        if node == trg:
             break;
-
+        
+        print(heap.heap)
         for nb in graph[node]:
             old = dist[nb]
             new = d_node + weight[node][nb]
@@ -92,30 +91,34 @@ def dijkstra_update_heap(graph, weight, src = 0, trg = None):
                 prec[nb] = node
                 heap.update((old, nb), (new, nb))
 
+    print("done")
     return dist, prec
 
-def find_path(prec, trg):
-    L = [trg]
+def find_path(prec, trg, h2):
+    L = [h2[trg]]
     while prec[trg] != trg:
         trg = prec[trg]
-        L.append(trg)
-    L.append(trg) # trg is the source
+        L.append(h2[trg])
+    L.append(h2[trg]) # trg is the source
+    print(L)
     return L
 
 def make_graph(vb_grp):
     h = {}
+    h2 = []
     n = len(vb_grp._points)
-    for e in range(n):
-        h[vb_grp._points] = e
-    mat = np.zeros(n, n)
+    for (e, (id, p)) in enumerate(vb_grp._points):
+        h[p] = e
+        h2.append(p)
+    mat = [[float('inf') for i in range(n)] for j in range(n)]
     graph = [[] for e in range(n)]
 
     for e in vb_grp.edges:
-        a, b = e
+        a, b = e.p1, e.p2
         d = a.dist_c(b)
-        mat[a][b] = d
-        mat[b][a] = d
-        graph[a].append(b)
-        graph[b].append(a)
+        mat[h[a]][h[b]] = d
+        mat[h[b]][h[a]] = d
+        graph[h[a]].append(h[b])
+        graph[h[b]].append(h[a])
 
-    return mat, graph
+    return graph, mat, h, h2
