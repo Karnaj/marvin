@@ -54,7 +54,7 @@ class VisibilityGraph:
         
     def add_point(self, point, obstacle_id=-1):
         for (i, o) in self.obstacles:
-            if i != obstacle_id and o.contains(point):
+            if i != obstacle_id and o.strictly_contains_point(point):
                 return
         self._points.append((obstacle_id, point))
         self._points.sort(key=lambda x : x[1])
@@ -64,9 +64,8 @@ class VisibilityGraph:
         is_reached = False
         for (i, p) in self._points:
             if i != -1:
-                segments.append(self.obstacles[i][1].edges_with(p)[1])
-                segm
-                ents.append(self.obstacles[i][1].edges_with(p)[0])
+                segments.append(self.obstacles[i][1].vertex_edges(p)[1])
+                segments.append(self.obstacles[i][1].vertex_edges(p)[0])
             if p == point:
                 is_reached = True
                 for (j, p1) in vus:
