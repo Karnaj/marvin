@@ -5,6 +5,7 @@ from triangulation import *
 from random import randint, sample
 import itertools
 from visibility_graph import *
+from dijkstra import *
 
 def print_points(points, color='black', s=10):
     X = [p.x for p in points]
@@ -56,25 +57,31 @@ print_segments(robot.segments(), color='b', lw=1)
 result = []
 for p in polygons:
     result.append(p.minkowski_sum(robot))
-print("Minkowski fini")
 
 
+v = VisibilityGraph(result, [robot.points()[0], Point(60, 55), Point(102, 91)])
 
-print("Début") 
-v = VisibilityGraph(result, [Point(148, 100), Point(122, 10)])
-v.add_point(robot.points()[0])
-print("Fin")
 
 
 
 # for (i,p) in enumerate(result):
     # print_segments(p.segments(), color='k', lw=3)
 
-print_segments(v.edges, color='g', lw=2)
+print_segments(v.edges, color='g', lw=1)
  
+graph, mat, h, h2 = make_graph(v)
+
+dist, prec = dijkstra_update_heap(graph, mat, h[robot.points()[0]])
+path = find_path(prec, h[Point(102, 91)], h2)
  
-plt.plot()
+X = [p.x for p in path]
+Y = [p.y for p in path]
+plt.plot(X, Y, color='r', lw=2)
+    
+
+ 
 plt.show() 
+plt.close()
 a = Polygon([Point(12, 18), Point(16, 18), Point(12, 16)]) 
     
 
