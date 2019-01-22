@@ -24,9 +24,7 @@ def read_from_file(file):
         for line in file:
             if step > 2:
                 break
-            if line == "robot\n":
-                step += 1
-            elif line == "points\n":
+            if line == "\n":
                 step += 1
             elif step == 0:
                 points = [s.split() for s in line.split(",")]
@@ -42,43 +40,47 @@ def read_from_file(file):
         return polygons, robot, points
         
 colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
-polygons, robot, points = read_from_file('example.txt')
+polygons, robot, points = read_from_file('laby.txt')
 
 
+#polygons = [triangle for p in polygons for triangle in p.simple_convex_decomposition()]
 
-#polygons = [triangle for p in polygons for triangle in p.simple_triangulation()]
+
+for p in polygons:
+    print_segments(p.segments())
+    
+
+
+print_segments(robot.segments(), color='b', lw=1)
+
 result = []
-
 for p in polygons:
-    news = p.minkowski_sum(robot)
-    for p1 in news:
-        result.append(p1)
+    result.append(p.minkowski_sum(robot))
+print("Minkowski fini")
 
 
-points = deepcopy(robot.points())
-p = points[0]
-points = [Point(p1.x - p.x, p1.y - p.y) for p1 in points]
-points = [Point(-p.x, -p.y) for p in points]
-        
-for p in polygons:
-    print_segments(p.segments(), color='k', lw=2)    
+
+print("Début") 
+v = VisibilityGraph(result, [Point(148, 100), Point(122, 10)])
+v.add_point(robot.points()[0])
+print("Fin")
+
+
+
+# for (i,p) in enumerate(result):
+    # print_segments(p.segments(), color='k', lw=3)
+
+print_segments(v.edges, color='g', lw=2)
+ 
+ 
+plt.plot()
+plt.show() 
+a = Polygon([Point(12, 18), Point(16, 18), Point(12, 16)]) 
     
-for p in result:
-    print_segments(p.segments(), color='r', lw=1)
-    
 
-print_points(points)
-print_segments(robot.segments(), color='b', lw=2)
 
-# v = VisibilityGraph(polygon_list, [Point(0, 7), Point(148, 100)])
-    
-# print_segments(polygon_1.segments(), color='black', lw=3)
-#print_segments(polygon_2.segments(), color='black', lw=2)
-#print_segments(polygon_3.segments(), color='black', lw=3)
-# print_segments(v.edges, color='red', lw=1)
 
-plt.show()
-plt.close()
+
 
 # while True:
     # str = input().split()
