@@ -99,6 +99,8 @@ def find_path(prec, trg, h2):
     while prec[trg] != trg:
         trg = prec[trg]
         L.append(h2[trg])
+        if trg == None:
+            return []
     L.append(h2[trg]) # trg is the source
     print(L)
     return L
